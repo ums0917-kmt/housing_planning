@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>住宅優先度マトリクス｜京都府南部版</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e0ddd5;
+  --text: #1a1a18;
+  --muted: #888880;
+  --p1: #1a7a3a;
+  --p1-bg: #e8f5ed;
+  --p1-border: #b8dfc5;
+  --p2: #1a4fa0;
+  --p2-bg: #e8eefc;
+  --p2-border: #b8cdf0;
+  --p3: #a05a10;
+  --p3-bg: #fdf0e0;
+  --p3-border: #f0d0a0;
+  --p4: #606060;
+  --p4-bg: #f0f0ee;
+  --p4-border: #d0d0cc;
+  --accent: #e85c20;
+  --pill-h: 44px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { font-size: 16px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* ── ヘッダー ── */
+.top-bar {
+  background: var(--text);
+  color: #fff;
+  padding: 16px 16px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-bar-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.top-bar-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.top-bar-title span { color: #6ee89a; }
+
+/* ── 気候バナー ── */
+.climate-strip {
+  background: #fff7f0;
+  border-bottom: 2px solid #ffd0a8;
+  padding: 12px 16px;
+}
+
+.climate-strip-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.climate-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chip {
+  background: #fff;
+  border: 1px solid #ffd0a8;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chip-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.chip-key { color: var(--muted); font-size: 11px; }
+
+.climate-desc {
+  font-size: 11px;
+  color: #8a6040;
+  line-height: 1.7;
+}
+
+/* ── フィルタータブ ── */
+.filter-bar {
+  background: var(--bg);
+  padding: 10px 16px 8px;
+  position: sticky;
+  top: 62px;
+  z-index: 90;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+
+.filter-scroll::-webkit-scrollbar { display: none; }
+
+.filter-btn {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.filter-btn.active-all   { background: var(--text); border-color: var(--text); color: #fff; }
+.filter-btn.active-p1    { background: var(--p1-bg); border-color: var(--p1); color: var(--p1); }
+.filter-btn.active-p2    { background: var(--p2-bg); border-color: var(--p2); color: var(--p2); }
+.filter-btn.active-p3    { background: var(--p3-bg); border-color: var(--p3); color: var(--p3); }
+.filter-btn.active-p4    { background: var(--p4-bg); border-color: var(--p4); color: var(--p4); }
+
+/* ── セクション ── */
+.section {
+  padding: 14px 16px 4px;
+}
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── カード ── */
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: box-shadow 0.15s;
+}
+
+.card:active { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+.card-tap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 左ライン */
+.card-line {
+  width: 4px;
+  border-radius: 2px;
+  align-self: stretch;
+  flex-shrink: 0;
+  min-height: 36px;
+}
+
+.card.p1 .card-line { background: var(--p1); }
+.card.p2 .card-line { background: var(--p2); }
+.card.p3 .card-line { background: var(--p3); }
+.card.p4 .card-line { background: var(--p4); }
+
+.card-rank {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card.p1 .card-rank { background: var(--p1-bg); color: var(--p1); }
+.card.p2 .card-rank { background: var(--p2-bg); color: var(--p2); }
+.card.p3 .card-rank { background: var(--p3-bg); color: var(--p3); }
+.card.p4 .card-rank { background: var(--p4-bg); color: var(--p4); }
+
+.card-main { flex: 1; min-width: 0; }
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.card-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.card.p1 .badge { background: var(--p1-bg); color: var(--p1); border: 1px solid var(--p1-border); }
+.card.p2 .badge { background: var(--p2-bg); color: var(--p2); border: 1px solid var(--p2-border); }
+.card.p3 .badge { background: var(--p3-bg); color: var(--p3); border: 1px solid var(--p3-border); }
+.card.p4 .badge { background: var(--p4-bg); color: var(--p4); border: 1px solid var(--p4-border); }
+
+.tag-up {
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #fff3ec;
+  color: var(--accent);
+  border: 1px solid #ffd0a8;
+  white-space: nowrap;
+}
+
+.tag-new {
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--p1-bg);
+  color: var(--p1);
+  border: 1px solid var(--p1-border);
+  white-space: nowrap;
+}
+
+.chevron {
+  font-size: 14px;
+  color: var(--muted);
+  transition: transform 0.2s;
+  margin-left: 4px;
+}
+
+.card.open .chevron { transform: rotate(180deg); }
+
+/* ── 展開エリア ── */
+.card-body {
+  display: none;
+  padding: 0 14px 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.card.open .card-body { display: block; }
+
+.kyoto-box {
+  background: #fff7f0;
+  border: 1px solid #ffd0a8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0 8px;
+  font-size: 12px;
+  color: #7a4820;
+  line-height: 1.75;
+}
+
+.kyoto-box-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.body-text {
+  font-size: 12px;
+  color: #555550;
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+
+.body-text b { color: var(--text); }
+
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.metric {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.metric-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.metric-key {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+.card.p1 .metric-val { color: var(--p1); }
+.card.p2 .metric-val { color: var(--p2); }
+.card.p3 .metric-val { color: var(--p3); }
+.card.p4 .metric-val { color: var(--p4); }
+
+/* ── フッターまとめ ── */
+.footer-note {
+  margin: 14px 16px 32px;
+  background: #edf7f1;
+  border: 1px solid var(--p1-border);
+  border-radius: 12px;
+  padding: 14px 14px;
+  font-size: 12px;
+  color: #3a6040;
+  line-height: 1.85;
+}
+
+.footer-note strong { color: var(--p1); font-weight: 700; }
+.footer-note .al { color: var(--accent); font-weight: 700; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="top-bar">
+  <div class="top-bar-label">Kyoto South · 地域区分6 · 京田辺市</div>
+  <div class="top-bar-title">長期低コスト住宅<br><span>建築優先度マトリクス</span></div>
+</div>
+
+<!-- 気候バナー -->
+<div class="climate-strip">
+  <div class="climate-strip-label">📍 京都府南部の気候特性</div>
+  <div class="climate-chips">
+    <div class="chip"><span class="chip-val">38〜39℃</span><span class="chip-key">夏の最高気温</span></div>
+    <div class="chip"><span class="chip-val">−2〜−5℃</span><span class="chip-key">冬の最低気温</span></div>
+    <div class="chip"><span class="chip-val">1,962h</span><span class="chip-key">年間日照時間</span></div>
+    <div class="chip"><span class="chip-val">地域区分6</span><span class="chip-key">ZEH基準</span></div>
+  </div>
+  <div class="climate-desc">冷暖房の両面負荷が日本最大級の盆地気候。断熱（冬）と遮熱（夏）の両立 + 太陽光の高発電効率が同時に活きる地域。</div>
+</div>
+
+<!-- フィルター -->
+<div class="filter-bar">
+  <div class="filter-scroll">
+    <button class="filter-btn active-all" onclick="filter('all',this)">すべて</button>
+    <button class="filter-btn" onclick="filter('p1',this)">🟢 最優先</button>
+    <button class="filter-btn" onclick="filter('p2',this)">🔵 高優先</button>
+    <button class="filter-btn" onclick="filter('p3',this)">🟡 中優先</button>
+    <button class="filter-btn" onclick="filter('p4',this)">⚪ 検討</button>
+  </div>
+</div>
+
+<!-- GROUP 1 -->
+<div class="section" data-group="躯体">
+  <div class="section-label">躯体・外皮性能 — 後変更不可</div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">断熱性能</div>
+        <div class="card-sub">HEAT20 G2以上 · 基礎断熱推奨</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        法定の地域区分6（UA≤0.87）は最低ライン。底冷えする京都南部の冬にはG2（≤0.46）以上が実質的な目標。基礎断熱は「底冷え対策」として床断熱より有効。
+      </div>
+      <div class="body-text">基礎断熱 + ダブル断熱（充填＋付加）で構造体を包む。建てた後に強化すると費用3〜5倍。施工前の仕様確定が全て。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">G2以上</div><div class="metric-key">推奨グレード</div></div>
+        <div class="metric"><div class="metric-val">≤0.46</div><div class="metric-key">目標UA値</div></div>
+        <div class="metric"><div class="metric-val">基礎断熱</div><div class="metric-key">底冷え対策</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">日射遮蔽（夏対策）</div>
+        <div class="card-sub">庇・軒 ≥600mm · 西面が最重要</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <div class="tag-up">京都でUP</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        夏の最高38〜39℃。断熱だけでは夏の輻射熱はカットできない。日射を「入れない設計」が冷房費の最大削減手段。
+      </div>
+      <div class="body-text">
+        <b>南面</b>：軒・庇600mm以上。夏は遮蔽、冬は取得を両立。<br>
+        <b>西面が最優先</b>：低角度の西日は庇が効かない。外付けブラインド・落葉樹で対応。開口部は間取り段階でしか変えられない。
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">≥600mm</div><div class="metric-key">南面軒の出</div></div>
+        <div class="metric"><div class="metric-val">西面優先</div><div class="metric-key">最重要方位</div></div>
+        <div class="metric"><div class="metric-val">▼20〜30%</div><div class="metric-key">冷房費削減</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">気密性能（C値）</div>
+        <div class="card-sub">C値 ≤1.0 · 施工後実測確認</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        夏の高湿度で気密が低いと壁内に湿気侵入→カビ・腐朽。冬は底冷えの冷気が隙間から入り断熱を無効化。両季節で重要。
+      </div>
+      <div class="body-text">C値は「施工後の実測値」で確認必須。気密測定を全棟実施するビルダーを選ぶ。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">≤1.0</div><div class="metric-key">最低要求C値</div></div>
+        <div class="metric"><div class="metric-val">≤0.5</div><div class="metric-key">理想C値</div></div>
+        <div class="metric"><div class="metric-val">施工後実測</div><div class="metric-key">確認方法</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">外壁・屋根の耐久性</div>
+        <div class="card-sub">遮熱ガルバ · 通気層必須</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        年間降水量1,545mm・梅雨期集中豪雨あり。夏の直射日光による熱負荷も高い。遮熱塗装付き素材は耐久性と冷房費削減を同時に達成。
+      </div>
+      <div class="body-text">
+        <b>屋根</b>：遮熱ガルバリウム + 通気層確保。<b>外壁</b>：遮熱塗装ガルバ or 高耐候磁器タイル。スレートは避ける。軒600mm以上で外壁への雨水・日射ダメージを大幅低減。
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">遮熱ガルバ</div><div class="metric-key">推奨屋根材</div></div>
+        <div class="metric"><div class="metric-val">30〜50年</div><div class="metric-key">メンテフリー</div></div>
+        <div class="metric"><div class="metric-val">通気層必須</div><div class="metric-key">夏の輻射熱対策</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">窓・サッシ性能</div>
+        <div class="card-sub">樹脂+Low-E · 南/東西でガラス種を使い分け</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        南面は「日射取得型Low-E」（冬有利）、東西面は「日射遮蔽型Low-E」（夏有利）を使い分けると夏冬両立できる。アルミ・アルミ樹脂複合は不可。
+      </div>
+      <div class="body-text">最低ライン：樹脂サッシ + Low-Eダブル（U≤1.6）。理想：樹脂 + トリプル（U≤0.9）。北面・大開口から優先投資。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">樹脂+LoE</div><div class="metric-key">最低仕様</div></div>
+        <div class="metric"><div class="metric-val">南/東西分け</div><div class="metric-key">ガラス使い分け</div></div>
+        <div class="metric"><div class="metric-val">U≤0.9</div><div class="metric-key">理想U値</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP 2 -->
+<div class="section" data-group="換気">
+  <div class="section-label">換気・空調設備</div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">第一種換気（全熱交換型）</div>
+        <div class="card-sub">温度＋湿気を同時回収 · 高湿度盆地向き</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <div class="tag-up">全熱優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        顕熱型は温度のみ回収するが湿気は捨てる。京都南部の高温多湿な夏には全熱交換型（温度＋湿度を両方回収）が有効。夏の室内への湿気持ち込みを大幅に抑制できる。
+      </div>
+      <div class="body-text">推奨：三菱ロスナイ・パナソニック全熱タイプ。フィルター清掃は自分でできる機種（年2〜4回）を選ぶ。換気経路は間取り段階で確定。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">全熱型</div><div class="metric-key">京都南部推奨</div></div>
+        <div class="metric"><div class="metric-val">70〜85%</div><div class="metric-key">熱・湿度回収率</div></div>
+        <div class="metric"><div class="metric-val">10〜15年</div><div class="metric-key">本体交換目安</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p2" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P2</div>
+      <div class="card-main">
+        <div class="card-title">高効率給湯（エコキュート）</div>
+        <div class="card-sub">COP3〜5 · 太陽光連携で昼間沸き上げ</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">高優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        京田辺市の日照1,962時間は京都市を上回る。太陽光余剰電力によるエコキュート「昼間沸き上げ」が特に有効。寒冷地仕様は不要（積雪稀）。
+      </div>
+      <div class="body-text">給湯はエネルギー消費の約25〜30%。ガスの1/3〜1/4のコスト。容量：4〜5人なら370〜460L。スマート制御対応機種を選ぶと太陽光と自動連携できる。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">COP3〜5</div><div class="metric-key">エネルギー効率</div></div>
+        <div class="metric"><div class="metric-val">昼間沸上</div><div class="metric-key">太陽光連携</div></div>
+        <div class="metric"><div class="metric-val">▼65%</div><div class="metric-key">給湯費削減</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP 3 -->
+<div class="section" data-group="エネルギー">
+  <div class="section-label">エネルギー創出・蓄積</div>
+
+  <div class="card p2" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P2</div>
+      <div class="card-main">
+        <div class="card-title">太陽光発電</div>
+        <div class="card-sub">4〜8kW · 京田辺市は全国上位の日照</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">高優先</div>
+        <div class="tag-up">発電有利</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        京田辺市の日照1,962時間は京都市（1,794時間）比約10%多く、同じ搭載容量でも発電量が多い。4kWで年間約4,200〜4,500kWh発電見込み。
+      </div>
+      <div class="body-text">2024年以降は自家消費最大化が基本戦略。ZEH・みらいえこ補助金の要件を兼ねるため補助金とセットで計画する。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">4〜8kW</div><div class="metric-key">推奨搭載容量</div></div>
+        <div class="metric"><div class="metric-val">≈4,400kWh</div><div class="metric-key">4kW年間発電量</div></div>
+        <div class="metric"><div class="metric-val">▼30〜50%</div><div class="metric-key">電気代削減</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p3" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P3</div>
+      <div class="card-main">
+        <div class="card-title">家庭用蓄電池</div>
+        <div class="card-sub">10〜16kWh · 補助金活用でコスパ改善</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">中優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        日照が多い京田辺市では昼間余剰電力が多く蓄電池の活躍機会大。京都府・市の補助金（2025年、自家消費型）と合わせて費用対効果を計算すること。
+      </div>
+      <div class="body-text">機器単体の回収期間は15〜20年だが補助金（最大90万円程度）で短縮可能。V2H＋EVと比較し、車の買い替えタイミングを考慮して判断。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">10〜16kWh</div><div class="metric-key">推奨容量</div></div>
+        <div class="metric"><div class="metric-val">最大90万</div><div class="metric-key">補助金上限</div></div>
+        <div class="metric"><div class="metric-val">停電72h+</div><div class="metric-key">非常時継続</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p3" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P3</div>
+      <div class="card-main">
+        <div class="card-title">EV + V2H</div>
+        <div class="card-sub">車を大容量蓄電池に · 配管先行施工が鍵</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">中優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="body-text">EV（例：日産リーフ40kWh）をV2H機器で家庭に放電。蓄電池より圧倒的なコスパ。<br><b>新築時の最適解</b>：V2H配管スリーブ＋200V専用回路だけ先行施工（追加費用10〜20万円）。本体設置は後からでOK。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">40〜90kWh</div><div class="metric-key">EV蓄電容量例</div></div>
+        <div class="metric"><div class="metric-val">10〜20万</div><div class="metric-key">先行配管費用</div></div>
+        <div class="metric"><div class="metric-val">◎</div><div class="metric-key">先行施工の価値</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP 4 -->
+<div class="section" data-group="設計">
+  <div class="section-label">設計計画 — 間取り・認定</div>
+
+  <div class="card p1" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P1</div>
+      <div class="card-main">
+        <div class="card-title">パッシブデザイン</div>
+        <div class="card-sub">南面採光 + 庇計算 · 追加費用ゼロ</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">最優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        北緯34.8°で夏の太陽高度が高く庇が効きやすい。南面のみに大窓を集中し庇600mmで夏は遮蔽・冬は取得の自動切り替えが成立。追加費用ほぼゼロで最大の効果。
+      </div>
+      <div class="body-text">南面大窓で冬に太陽熱を取り込み暖房負荷を下げる。東西面の開口は最小化。西面は外付けブラインドや落葉樹を組み合わせる。設計初期段階が唯一の機会。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">追加費用0</div><div class="metric-key">コスト</div></div>
+        <div class="metric"><div class="metric-val">▼15〜25%</div><div class="metric-key">冷暖房負荷削減</div></div>
+        <div class="metric"><div class="metric-val">設計時のみ</div><div class="metric-key">実施可能時期</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p2" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P2</div>
+      <div class="card-main">
+        <div class="card-title">長期優良住宅認定</div>
+        <div class="card-sub">耐震等級3 · ローン控除・補助金の前提</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">高優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="body-text">ローン控除最大枠（5,000万円）、固定資産税5年減額、登録免許税軽減、地震保険割引など多数の優遇の前提条件。みらいえこ住宅2026の補助金要件にも関係。認定費用（数十万円）は各種優遇の合計で確実に回収できる。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">耐震等級3</div><div class="metric-key">構造要件</div></div>
+        <div class="metric"><div class="metric-val">5,000万</div><div class="metric-key">ローン控除上限</div></div>
+        <div class="metric"><div class="metric-val">5年減額</div><div class="metric-key">固定資産税</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p3" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P3</div>
+      <div class="card-main">
+        <div class="card-title">配管・配線の更新性設計</div>
+        <div class="card-sub">V2Hスリーブ先行施工を含む</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">中優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="body-text">給排水管・電気配線を構造体に埋め込まない設計で15〜30年後の設備更新費を▼30〜50%削減。V2H・蓄電池用の配管スリーブ＋200V専用回路を新築時に先行施工するのが最小コストの長期投資。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">▼30〜50%</div><div class="metric-key">将来リフォーム費</div></div>
+        <div class="metric"><div class="metric-val">10〜30万</div><div class="metric-key">追加費用目安</div></div>
+        <div class="metric"><div class="metric-val">30〜50年後</div><div class="metric-key">効果発現</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP 5 -->
+<div class="section" data-group="地域">
+  <div class="section-label">京都南部・追加項目</div>
+
+  <div class="card p2" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P2</div>
+      <div class="card-main">
+        <div class="card-title">床下・小屋裏の防湿通気設計</div>
+        <div class="card-sub">盆地の湿気から構造を守る</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">高優先</div>
+        <div class="tag-new">追加</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        盆地地形で夏に湿気がこもりやすい。床下・小屋裏の湿気管理を怠ると木材腐朽・シロアリ・断熱材劣化が起きる。構造の50年耐久に直結するため汎用住宅より優先度が高い。
+      </div>
+      <div class="body-text">
+        <b>基礎断熱時</b>：床下を室内空間として扱い換気経路に組み込む。<b>床断熱時</b>：床下通気確保＋防湿フィルム丁寧施工。<b>小屋裏</b>：垂木通気層＋防湿シートで夏の湿気を外部に排出。
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">構造寿命</div><div class="metric-key">影響する項目</div></div>
+        <div class="metric"><div class="metric-val">50年+</div><div class="metric-key">目標耐久性</div></div>
+        <div class="metric"><div class="metric-val">通気層必須</div><div class="metric-key">夏対策の基本</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p3" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P3</div>
+      <div class="card-main">
+        <div class="card-title">全館空調・小屋裏エアコン</div>
+        <div class="card-sub">G2断熱が前提 · 冷房能力を重視</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">中優先</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="kyoto-box">
+        <span class="kyoto-box-label">京都府南部</span>
+        京都南部の酷暑では、G2断熱でも冷房能力の適切な設計が必須。小屋裏エアコン1台で全館冷房する場合、ダクト経路と冷媒量の計算が重要。過小能力の機種を避けること。
+      </div>
+      <div class="body-text">コスパ最良：小屋裏エアコン1台（4〜6kW）+ 適切なダクト設計で全館対応。全館空調システムは快適だが初期費200〜400万円・メンテ費高い。断熱グレードを確定させてから空調容量を計算する。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">4〜6kW</div><div class="metric-key">推奨冷房能力</div></div>
+        <div class="metric"><div class="metric-val">1〜2台</div><div class="metric-key">G2以上の必要台数</div></div>
+        <div class="metric"><div class="metric-val">断熱が先</div><div class="metric-key">検討の前提</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p4" onclick="toggle(this)">
+    <div class="card-tap">
+      <div class="card-line"></div>
+      <div class="card-rank">P4</div>
+      <div class="card-main">
+        <div class="card-title">HEMS + スマート制御</div>
+        <div class="card-sub">太陽光・蓄電池・エコキュートの統合管理</div>
+      </div>
+      <div class="card-right">
+        <div class="badge">検討</div>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="body-text">太陽光・V2H・エコキュートを導入するなら連携対応機種を最初から選ぶと後付け費用不要。本格HEMSは15〜30万円。スマートメーターの見える化だけなら無料〜数万円で開始できる。</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val">15〜30万</div><div class="metric-key">本格HEMS費用</div></div>
+        <div class="metric"><div class="metric-val">見える化</div><div class="metric-key">主なメリット</div></div>
+        <div class="metric"><div class="metric-val">太陽光連携</div><div class="metric-key">導入条件</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- まとめ -->
+<div class="footer-note">
+  <strong>京都府南部 — 変更点まとめ</strong><br><br>
+  <span class="al">優先度が上がった・追加された項目：</span><br>
+  ① 日射遮蔽をP1に格上げ（夏の酷暑対策）<br>
+  ② 換気を「全熱交換型」に指定（高湿度対策）<br>
+  ③ 床下・小屋裏の防湿通気設計を新規追加（P2）<br>
+  ④ 太陽光の根拠強化（京田辺市は日照量が特に多い）<br>
+  ⑤ 外壁・屋根に遮熱塗装を要件追加<br><br>
+  <strong>変わらないもの：</strong>断熱・気密・耐久性素材・パッシブデザイン・長期優良住宅認定は最優先のまま。「躯体は後から変えられない」という原則はどの地域でも不変。
+</div>
+
+<script>
+function toggle(card) {
+  card.classList.toggle('open');
+}
+
+function filter(type, btn) {
+  // ボタンのアクティブ状態をリセット
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn';
+  });
+
+  // クリックしたボタンをアクティブに
+  if (type === 'all') btn.classList.add('active-all');
+  else btn.classList.add('active-' + type);
+
+  // カードの表示・非表示
+  document.querySelectorAll('.card').forEach(card => {
+    if (type === 'all') {
+      card.classList.remove('hidden');
+    } else {
+      if (card.classList.contains(type)) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
